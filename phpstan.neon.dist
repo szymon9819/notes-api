@@ -25,9 +25,3 @@ parameters:
     noUnnecessaryEnumerableToArrayCalls: true
     parseModelCastsMethod: true
     enableMigrationCache: true
-
-services:
-    -
-        class: App\StaticAnalysis\Rules\InterfaceShouldNotUseInterfaceSuffixRule
-        tags:
-            - phpstan.rules.rule

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Rector\Config\RectorConfig;
+use Rector\Php85\Rector\Property\AddOverrideAttributeToOverriddenPropertiesRector;
 use RectorLaravel\Rector\FuncCall\RemoveDumpDataDeadCodeRector;
 use RectorLaravel\Set\LaravelSetProvider;
 
@@ -20,6 +21,7 @@ return RectorConfig::configure()
     ->withSkip([
         __DIR__ . '/bootstrap/cache',
         __DIR__ . '/database/migrations',
+        AddOverrideAttributeToOverriddenPropertiesRector::class,
     ])
     ->withPhpSets(php85: true)
     ->withSetProviders(LaravelSetProvider::class)

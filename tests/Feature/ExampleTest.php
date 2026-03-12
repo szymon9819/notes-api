@@ -1,19 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Feature;
 
-// use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-class ExampleTest extends TestCase
+final class ExampleTest extends TestCase
 {
-    /**
-     * A basic test example.
-     */
     public function test_the_health_endpoint_returns_a_successful_response(): void
     {
-        $response = $this->get('/up');
+        $testResponse = $this->get('/up');
 
-        $response->assertStatus(200);
+        $testResponse->assertOk();
     }
 }
