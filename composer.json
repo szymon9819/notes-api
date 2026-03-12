@@ -53,7 +53,7 @@
             "@php vendor/bin/pint --test"
         ],
         "ci:prepare": [
-            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
+            "@php -r \"copy('.env.ci.example', '.env');\"",
             "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
             "@php artisan key:generate --force",
             "@php artisan config:clear --ansi"
