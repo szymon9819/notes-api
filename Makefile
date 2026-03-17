@@ -1,4 +1,4 @@
-.PHONY: pint pint-check rector rector-check phpstan test fix check before-push
+.PHONY: pint pint-check rector rector-check phpstan test fix check before-push release
 
 PINT = vendor/bin/pint
 RECTOR = php vendor/bin/rector process --memory-limit=1G
@@ -30,3 +30,6 @@ check: pint-check rector-check phpstan test
 before-push:
 	$(MAKE) fix
 	$(MAKE) check
+
+release:
+	@./release.sh "$(TAG)"
