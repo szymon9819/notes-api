@@ -43,5 +43,17 @@ task('artisan:reload', function (): void {
     run('cd {{release_path}} && {{bin/php}} artisan reload --no-interaction');
 });
 
+desc('Deploys the API project');
+task('deploy', [
+    'deploy:prepare',
+    'deploy:vendors',
+    'artisan:storage:link',
+    'artisan:config:cache',
+    'artisan:route:cache',
+    'artisan:event:cache',
+    'artisan:migrate',
+    'deploy:publish',
+]);
+
 after('deploy:success', 'artisan:reload');
 after('deploy:failed', 'deploy:unlock');
