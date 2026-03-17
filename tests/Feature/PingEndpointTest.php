@@ -10,9 +10,9 @@ final class PingEndpointTest extends TestCase
 {
     public function test_ping_endpoint_returns_expected_response(): void
     {
-        $response = $this->getJson('/api/ping');
+        $testResponse = $this->getJson('/api/ping');
 
-        $response
+        $testResponse
             ->assertOk()
             ->assertExactJson([
                 'status' => 'ok',
