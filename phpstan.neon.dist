@@ -1,0 +1,27 @@
+includes:
+    - vendor/phpstan/phpstan/conf/bleedingEdge.neon
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    level: max
+    paths:
+        - app
+        - bootstrap/app.php
+        - bootstrap/providers.php
+        - config
+        - database/factories
+        - database/seeders
+        - routes
+        - tests
+    excludePaths:
+        analyse:
+            - bootstrap/cache/*
+    databaseMigrationsPath:
+        - database/migrations
+    checkModelProperties: true
+    checkModelMethodVisibility: true
+    checkConfigTypes: true
+    checkAuthCallsWhenInRequestScope: true
+    noUnnecessaryEnumerableToArrayCalls: true
+    parseModelCastsMethod: true
+    enableMigrationCache: true

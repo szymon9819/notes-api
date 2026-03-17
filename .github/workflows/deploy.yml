@@ -1,0 +1,68 @@
+name: deploy
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+concurrency:
+  group: production_environment
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  PHP_VERSION: '8.5'
+  DEPLOY_REPOSITORY: https://github.com/szymon9819/notes-api.git
+
+jobs:
+  deploy:
+    name: Deploy production
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 15
+    env:
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_REMOTE_USER: ubuntu
+      DEPLOY_PATH: /var/www/notes-api
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          coverage: none
+          tools: composer:v2
+          extensions: pdo_sqlite
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v5
+        with:
+          path: |
+            vendor
+            ~/.composer/cache/files
+          key: composer-deploy-${{ runner.os }}-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            composer-deploy-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Deploy tagged release
+        if: github.event_name == 'push'
+        uses: deployphp/action@v1
+        with:
+          private-key: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+          dep: deploy production --tag=${{ github.ref_name }}
+
+      - name: Deploy manual run
+        if: github.event_name == 'workflow_dispatch'
+        uses: deployphp/action@v1
+        with:
+          private-key: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+          dep: deploy production
