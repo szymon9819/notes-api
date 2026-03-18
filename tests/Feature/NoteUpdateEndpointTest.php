@@ -15,7 +15,8 @@ final class NoteUpdateEndpointTest extends TestCase
 
     public function test_update_changes_a_note_and_syncs_tags(): void
     {
-        $note = Note::factory()->draft()->create([
+        $user = $this->actingAsApiUser();
+        $note = Note::factory()->for($user)->draft()->create([
             'title' => 'Old title',
         ]);
         $oldTag = Tag::factory()->create();
@@ -23,7 +24,7 @@ final class NoteUpdateEndpointTest extends TestCase
 
         $note->tags()->attach($oldTag);
 
-        $testResponse = $this->patchJson('/api/notes/' . $note->id, [
+        $testResponse = $this->patchJson(route('notes.update', $note), [
             'title' => 'Updated title',
             'status' => 'published',
             'tag_ids' => [$newTag->id],
@@ -31,12 +32,14 @@ final class NoteUpdateEndpointTest extends TestCase
 
         $testResponse
             ->assertOk()
+            ->assertJsonPath('data.user.id', $user->id)
             ->assertJsonPath('data.title', 'Updated title')
             ->assertJsonPath('data.status', 'published')
             ->assertJsonPath('data.tags.0.id', $newTag->id);
 
         $this->assertDatabaseHas('notes', [
             'id' => $note->id,
+            'user_id' => $user->id,
             'title' => 'Updated title',
             'status' => 'published',
         ]);
@@ -48,11 +51,12 @@ final class NoteUpdateEndpointTest extends TestCase
 
     public function test_update_preserves_tags_when_tag_ids_are_not_provided(): void
     {
-        $note = Note::factory()->create();
+        $user = $this->actingAsApiUser();
+        $note = Note::factory()->for($user)->create();
         $tag = Tag::factory()->create();
         $note->tags()->attach($tag);
 
-        $testResponse = $this->patchJson('/api/notes/' . $note->id, [
+        $testResponse = $this->patchJson(route('notes.update', $note), [
             'title' => 'Renamed note',
         ]);
 
@@ -69,13 +73,14 @@ final class NoteUpdateEndpointTest extends TestCase
 
     public function test_update_can_clear_tags_and_published_at(): void
     {
-        $note = Note::factory()->create([
+        $user = $this->actingAsApiUser();
+        $note = Note::factory()->for($user)->create([
             'status' => 'published',
         ]);
         $tag = Tag::factory()->create();
         $note->tags()->attach($tag);
 
-        $testResponse = $this->patchJson('/api/notes/' . $note->id, [
+        $testResponse = $this->patchJson(route('notes.update', $note), [
             'status' => 'draft',
             'published_at' => null,
             'tag_ids' => [],
@@ -95,9 +100,10 @@ final class NoteUpdateEndpointTest extends TestCase
 
     public function test_update_validates_the_payload(): void
     {
-        $note = Note::factory()->create();
+        $user = $this->actingAsApiUser();
+        $note = Note::factory()->for($user)->create();
 
-        $testResponse = $this->patchJson('/api/notes/' . $note->id, [
+        $testResponse = $this->patchJson(route('notes.update', $note), [
             'status' => 'wrong',
             'tag_ids' => [123456],
         ]);
@@ -105,5 +111,15 @@ final class NoteUpdateEndpointTest extends TestCase
         $testResponse
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['status', 'tag_ids.0']);
+    }
+
+    public function test_update_returns_not_found_for_note_owned_by_other_user(): void
+    {
+        $this->actingAsApiUser();
+        $note = Note::factory()->create();
+
+        $this->patchJson(route('notes.update', $note), [
+            'title' => 'Should not update',
+        ])->assertNotFound();
     }
 }

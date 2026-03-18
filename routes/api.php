@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\AuthTokenController;
 use App\Http\Controllers\Api\NoteController;
 use App\Http\Controllers\Api\TagController;
 use Illuminate\Http\JsonResponse;
@@ -14,6 +15,10 @@ Route::get('/ping', fn (): JsonResponse => response()->json([
 
 Route::get('/docs', fn (): RedirectResponse => to_route('scramble.docs.ui'))->name('docs.show');
 
-Route::apiResource('notes', NoteController::class);
+Route::post('/login', [AuthTokenController::class, 'login'])->name('auth.login');
 
-Route::get('/tags', [TagController::class, 'index'])->name('tags.index');
+Route::middleware('auth:sanctum')->group(function (): void {
+    Route::apiResource('notes', NoteController::class);
+
+    Route::get('/tags', [TagController::class, 'index'])->name('tags.index');
+});

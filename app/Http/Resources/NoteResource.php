@@ -23,13 +23,15 @@ class NoteResource extends JsonResource
 
         return [
             'id' => $note->id,
+            'user_id' => $note->user_id,
             'title' => $note->title,
             'content' => $note->content,
-            'status' => $note->status,
+            'status' => $note->status->value,
             'is_pinned' => $note->is_pinned,
             'published_at' => $note->published_at?->toAtomString(),
             'created_at' => $note->created_at?->toAtomString(),
             'updated_at' => $note->updated_at?->toAtomString(),
+            'user' => UserResource::make($this->whenLoaded('user')),
             'tags' => TagResource::collection($this->whenLoaded('tags')),
         ];
     }

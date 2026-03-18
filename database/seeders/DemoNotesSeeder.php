@@ -6,8 +6,10 @@ namespace Database\Seeders;
 
 use App\Models\Note;
 use App\Models\Tag;
+use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class DemoNotesSeeder extends Seeder
 {
@@ -15,6 +17,22 @@ class DemoNotesSeeder extends Seeder
 
     public function run(): void
     {
+        /** @var array<string, int> $userIdsByEmail */
+        $userIdsByEmail = collect([
+            ['name' => 'Alice Demo', 'email' => 'alice@example.com'],
+            ['name' => 'Bob Demo', 'email' => 'bob@example.com'],
+        ])->mapWithKeys(
+            fn (array $attributes): array => [
+                $attributes['email'] => User::query()->firstOrCreate(
+                    ['email' => $attributes['email']],
+                    [
+                        ...$attributes,
+                        'password' => Hash::make('password'),
+                    ],
+                )->id,
+            ],
+        )->all();
+
         /** @var array<string, int> $tagIdsBySlug */
         $tagIdsBySlug = collect([
             ['name' => 'Work', 'slug' => 'work'],
@@ -30,6 +48,7 @@ class DemoNotesSeeder extends Seeder
         $notes = [
             [
                 'attributes' => [
+                    'user_id' => $userIdsByEmail['alice@example.com'],
                     'title' => 'Ship the demo Notes API',
                     'content' => 'Expose a small public API with notes, tags and generated OpenAPI documentation.',
                     'status' => 'published',
@@ -40,6 +59,7 @@ class DemoNotesSeeder extends Seeder
             ],
             [
                 'attributes' => [
+                    'user_id' => $userIdsByEmail['alice@example.com'],
                     'title' => 'Collect product ideas',
                     'content' => 'Keep a short backlog of experiments for the next iteration.',
                     'status' => 'draft',
@@ -50,6 +70,7 @@ class DemoNotesSeeder extends Seeder
             ],
             [
                 'attributes' => [
+                    'user_id' => $userIdsByEmail['bob@example.com'],
                     'title' => 'Weekend reading list',
                     'content' => 'APIs, DX improvements and a couple of articles to revisit later.',
                     'status' => 'archived',

@@ -15,14 +15,15 @@ final class TagsEndpointTest extends TestCase
 
     public function test_tags_endpoint_returns_available_tags(): void
     {
+        $user = $this->actingAsApiUser();
         $tag = Tag::factory()->create([
             'name' => 'Backend',
             'slug' => 'backend',
         ]);
 
-        Note::factory()->create()->tags()->attach($tag);
+        Note::factory()->for($user)->create()->tags()->attach($tag);
 
-        $testResponse = $this->getJson('/api/tags');
+        $testResponse = $this->getJson(route('tags.index'));
 
         $testResponse
             ->assertOk()
@@ -35,16 +36,20 @@ final class TagsEndpointTest extends TestCase
 
     public function test_tags_endpoint_returns_tags_in_name_order(): void
     {
-        Tag::factory()->create([
+        $user = $this->actingAsApiUser();
+        $firstTag = Tag::factory()->create([
             'name' => 'Zulu',
             'slug' => 'zulu',
         ]);
-        Tag::factory()->create([
+        $secondTag = Tag::factory()->create([
             'name' => 'Alpha',
             'slug' => 'alpha',
         ]);
 
-        $testResponse = $this->getJson('/api/tags');
+        Note::factory()->for($user)->create()->tags()->attach($firstTag);
+        Note::factory()->for($user)->create()->tags()->attach($secondTag);
+
+        $testResponse = $this->getJson(route('tags.index'));
 
         $testResponse
             ->assertOk()

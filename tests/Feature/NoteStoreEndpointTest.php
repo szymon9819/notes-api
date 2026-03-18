@@ -15,10 +15,11 @@ final class NoteStoreEndpointTest extends TestCase
 
     public function test_store_creates_a_note_with_tags(): void
     {
+        $user = $this->actingAsApiUser();
         $firstTag = Tag::factory()->create();
         $secondTag = Tag::factory()->create();
 
-        $testResponse = $this->postJson('/api/notes', [
+        $testResponse = $this->postJson(route('notes.store'), [
             'title' => 'First demo note',
             'content' => 'Created from a feature test.',
             'status' => 'published',
@@ -28,11 +29,13 @@ final class NoteStoreEndpointTest extends TestCase
 
         $testResponse
             ->assertCreated()
+            ->assertJsonPath('data.user.id', $user->id)
             ->assertJsonPath('data.title', 'First demo note')
             ->assertJsonPath('data.is_pinned', true)
             ->assertJsonCount(2, 'data.tags');
 
         $this->assertDatabaseHas('notes', [
+            'user_id' => $user->id,
             'title' => 'First demo note',
             'status' => 'published',
             'is_pinned' => true,
@@ -45,7 +48,9 @@ final class NoteStoreEndpointTest extends TestCase
 
     public function test_store_validates_the_payload(): void
     {
-        $testResponse = $this->postJson('/api/notes', [
+        $this->actingAsApiUser();
+
+        $testResponse = $this->postJson(route('notes.store'), [
             'status' => 'invalid',
             'tag_ids' => [999],
         ]);
@@ -57,7 +62,9 @@ final class NoteStoreEndpointTest extends TestCase
 
     public function test_store_sets_published_at_when_published_note_has_no_date(): void
     {
-        $testResponse = $this->postJson('/api/notes', [
+        $this->actingAsApiUser();
+
+        $testResponse = $this->postJson(route('notes.store'), [
             'title' => 'Published without timestamp',
             'status' => 'published',
         ]);

@@ -14,13 +14,23 @@ final class NoteDestroyEndpointTest extends TestCase
 
     public function test_destroy_removes_a_note(): void
     {
-        $note = Note::factory()->create();
+        $user = $this->actingAsApiUser();
+        $note = Note::factory()->for($user)->create();
 
-        $this->deleteJson('/api/notes/' . $note->id)
+        $this->deleteJson(route('notes.destroy', $note))
             ->assertNoContent();
 
         $this->assertDatabaseMissing('notes', [
             'id' => $note->id,
         ]);
+    }
+
+    public function test_destroy_returns_not_found_for_note_owned_by_other_user(): void
+    {
+        $this->actingAsApiUser();
+        $note = Note::factory()->create();
+
+        $this->deleteJson(route('notes.destroy', $note))
+            ->assertNotFound();
     }
 }
