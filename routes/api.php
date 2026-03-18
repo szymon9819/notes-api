@@ -2,12 +2,15 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\NoteController;
+use App\Http\Controllers\Api\TagController;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/ping', fn (): JsonResponse => response()->json([
     'status' => 'ok',
-]));
+]))->name('system.ping');
 
-Route::get('/user', fn (Request $request) => $request->user())->middleware('auth:sanctum');
+Route::apiResource('notes', NoteController::class);
+
+Route::get('/tags', [TagController::class, 'index'])->name('tags.index');
