@@ -43,6 +43,10 @@ task('artisan:reload', function (): void {
     run('cd {{release_path}} && {{bin/php}} artisan reload --no-interaction');
 });
 
+task('artisan:scramble:export', function (): void {
+    run('cd {{release_path}} && {{bin/php}} artisan scramble:export --no-interaction');
+});
+
 desc('Deploys the API project');
 task('deploy', [
     'deploy:prepare',
@@ -52,6 +56,7 @@ task('deploy', [
     'artisan:route:cache',
     'artisan:event:cache',
     'artisan:migrate',
+    'artisan:scramble:export',
     'deploy:publish',
 ]);
 

@@ -25,6 +25,7 @@
       "anonymous_class": true,
       "named_class": true
     },
+    "not_operator_with_successor_space": false,
     "no_unused_imports": true,
     "ordered_imports": {
       "sort_algorithm": "alpha"
@@ -39,6 +40,7 @@
         "match",
         "parameters"
       ]
-    }
+    },
+    "unary_operator_spaces": false
   }
 }
