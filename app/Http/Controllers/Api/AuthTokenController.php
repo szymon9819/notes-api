@@ -33,9 +33,8 @@ class AuthTokenController extends Controller
         $expiresAt = $issuedAt->copy()->addMinutes($ttlInMinutes);
         $expiresInSeconds = $issuedAt->diffInSeconds($expiresAt);
         $newAccessToken = $user->createToken(
-            $issueApiTokenRequest->deviceName(),
-            ['notes:read', 'notes:write'],
-            $expiresAt,
+            name: $issueApiTokenRequest->deviceName(),
+            expiresAt: $expiresAt,
         );
 
         return response()->json([
