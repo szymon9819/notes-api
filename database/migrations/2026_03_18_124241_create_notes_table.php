@@ -12,12 +12,17 @@ return new class() extends Migration
     {
         Schema::create('notes', function (Blueprint $table): void {
             $table->id();
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->string('title');
             $table->text('content')->nullable();
             $table->string('status')->default('draft');
             $table->boolean('is_pinned')->default(false);
             $table->timestamp('published_at')->nullable();
             $table->timestamps();
+
+            $table->index(['user_id', 'published_at', 'id']);
+            $table->index(['user_id', 'status']);
+            $table->index(['user_id', 'is_pinned']);
         });
     }
 

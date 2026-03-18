@@ -22,7 +22,7 @@ class AuthTokenController extends Controller
     {
         $user = User::query()->where('email', $issueApiTokenRequest->email())->first();
 
-        if (! $user instanceof User || ! Hash::check($issueApiTokenRequest->password(), $user->password)) {
+        if (!($user instanceof User) || !Hash::check($issueApiTokenRequest->password(), $user->password)) {
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are incorrect.'],
             ]);
