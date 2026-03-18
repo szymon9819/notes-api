@@ -6,13 +6,9 @@ namespace Tests\Feature;
 
 use App\Models\Note;
 use App\Models\Tag;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
 
-final class NotesIndexEndpointTest extends TestCase
+final class NotesIndexEndpointTest extends FeatureTestCase
 {
-    use RefreshDatabase;
-
     public function test_index_returns_paginated_notes(): void
     {
         $user = $this->actingAsApiUser();

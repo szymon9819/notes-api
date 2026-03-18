@@ -4,18 +4,6 @@ declare(strict_types=1);
 
 namespace Tests;
 
-use App\Models\User;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
-use Laravel\Sanctum\Sanctum;
 
-abstract class TestCase extends BaseTestCase
-{
-    protected function actingAsApiUser(?User $user = null): User
-    {
-        $user ??= User::factory()->create();
-
-        Sanctum::actingAs($user);
-
-        return $user;
-    }
-}
+abstract class TestCase extends BaseTestCase {}

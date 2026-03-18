@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-
-final class DocumentationEndpointsTest extends TestCase
+final class DocumentationEndpointsTest extends FeatureTestCase
 {
     public function test_api_docs_endpoint_redirects_to_scramble_ui(): void
     {

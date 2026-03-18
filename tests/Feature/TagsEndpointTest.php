@@ -6,13 +6,9 @@ namespace Tests\Feature;
 
 use App\Models\Note;
 use App\Models\Tag;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
 
-final class TagsEndpointTest extends TestCase
+final class TagsEndpointTest extends FeatureTestCase
 {
-    use RefreshDatabase;
-
     public function test_tags_endpoint_returns_available_tags(): void
     {
         $user = $this->actingAsApiUser();

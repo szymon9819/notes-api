@@ -5,13 +5,9 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
 
-final class AuthTokenEndpointTest extends TestCase
+final class AuthTokenEndpointTest extends FeatureTestCase
 {
-    use RefreshDatabase;
-
     public function test_token_endpoint_returns_a_plain_text_token_for_valid_credentials(): void
     {
         $user = User::factory()->create([

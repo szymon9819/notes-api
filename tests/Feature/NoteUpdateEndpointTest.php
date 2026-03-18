@@ -6,13 +6,9 @@ namespace Tests\Feature;
 
 use App\Models\Note;
 use App\Models\Tag;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
 
-final class NoteUpdateEndpointTest extends TestCase
+final class NoteUpdateEndpointTest extends FeatureTestCase
 {
-    use RefreshDatabase;
-
     public function test_update_changes_a_note_and_syncs_tags(): void
     {
         $user = $this->actingAsApiUser();

@@ -6,13 +6,9 @@ namespace Tests\Feature;
 
 use App\Models\Note;
 use App\Models\Tag;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
 
-final class NoteStoreEndpointTest extends TestCase
+final class NoteStoreEndpointTest extends FeatureTestCase
 {
-    use RefreshDatabase;
-
     public function test_store_creates_a_note_with_tags(): void
     {
         $user = $this->actingAsApiUser();

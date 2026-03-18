@@ -5,13 +5,9 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Models\Note;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
 
-final class NoteDestroyEndpointTest extends TestCase
+final class NoteDestroyEndpointTest extends FeatureTestCase
 {
-    use RefreshDatabase;
-
     public function test_destroy_removes_a_note(): void
     {
         $user = $this->actingAsApiUser();

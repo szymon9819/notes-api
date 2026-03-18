@@ -7,13 +7,9 @@ namespace Tests\Feature;
 use App\Models\Note;
 use App\Models\Tag;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
 
-final class NoteShowEndpointTest extends TestCase
+final class NoteShowEndpointTest extends FeatureTestCase
 {
-    use RefreshDatabase;
-
     public function test_show_returns_a_single_note_with_tags(): void
     {
         $user = $this->actingAsApiUser(User::factory()->create([
