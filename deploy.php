@@ -27,6 +27,7 @@ set('application', 'notes-api');
 set('repository', deployEnv('DEPLOY_REPOSITORY'));
 set('keep_releases', 5);
 set('http_user', deployEnv('DEPLOY_HTTP_USER', 'www-data'));
+set('shared_files', ['.env', 'database/database.sqlite']);
 
 $production = host('production')
     ->setHostname(deployEnv('DEPLOY_HOST'))

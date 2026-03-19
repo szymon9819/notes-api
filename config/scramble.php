@@ -127,9 +127,7 @@ return [
      */
     'flatten_deep_query_parameters' => true,
 
-    'middleware' => [
-        'web',
-    ],
+    'middleware' => [],
 
     'extensions' => [],
 ];
