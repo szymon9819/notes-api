@@ -41,6 +41,6 @@
         "parameters"
       ]
     },
-    "unary_operator_spaces": false
+    "unary_operator_spaces": true
   }
 }
