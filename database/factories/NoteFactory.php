@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
-use App\Enums\NoteStatus;
-use App\Models\Note;
-use App\Models\User;
+use App\Domain\Notes\Enums\NoteStatus;
+use App\Persistence\Eloquent\Models\Note;
+use App\Persistence\Eloquent\Models\User;
 use DateTime;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -15,6 +15,8 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class NoteFactory extends Factory
 {
+    protected $model = Note::class;
+
     /**
      * @return array{
      *     user_id: UserFactory,
@@ -22,7 +24,9 @@ class NoteFactory extends Factory
      *     content: string,
      *     status: NoteStatus,
      *     is_pinned: bool,
-     *     published_at: DateTime
+     *     published_at: DateTime,
+     *     publication_reason_type: string,
+     *     publication_reason_message: string
      * }
      */
     public function definition(): array
@@ -34,15 +38,19 @@ class NoteFactory extends Factory
             'status' => NoteStatus::Published,
             'is_pinned' => false,
             'published_at' => fake()->dateTimeBetween('-1 month', 'now'),
+            'publication_reason_type' => 'knowledge',
+            'publication_reason_message' => fake()->sentence(3),
         ];
     }
 
     public function draft(): static
     {
-        /** @var array{status: NoteStatus, published_at: null} $state */
+        /** @var array{status: NoteStatus, published_at: null, publication_reason_type: null, publication_reason_message: null} $state */
         $state = [
             'status' => NoteStatus::Draft,
             'published_at' => null,
+            'publication_reason_type' => null,
+            'publication_reason_message' => null,
         ];
 
         return $this->state(fn (): array => [
