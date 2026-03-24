@@ -2,9 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Requests;
+namespace App\Infrastructure\Http\Requests;
 
-use App\Enums\NoteStatus;
+use App\Domain\Notes\Enums\NoteStatus;
+use App\Domain\Notes\Enums\PublicationReasonType;
+use App\Domain\Notes\ValueObjects\PublicationReason;
 use Illuminate\Contracts\Validation\Rule as ValidationRuleContract;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -29,6 +31,18 @@ class StoreNoteRequest extends FormRequest
             'status' => ['required', Rule::enum(NoteStatus::class)],
             'is_pinned' => ['sometimes', 'boolean'],
             'published_at' => ['nullable', 'date'],
+            'publication_reason_type' => [
+                'required_if:status,published',
+                'required_with:publication_reason_message',
+                Rule::enum(PublicationReasonType::class),
+            ],
+            'publication_reason_message' => [
+                'required_if:status,published',
+                'required_with:publication_reason_type',
+                'string',
+                'max:' . PublicationReason::MAX_MESSAGE_LENGTH,
+                'not_regex:/(?:https?:\/\/|www\.)/i',
+            ],
             'tag_ids' => ['sometimes', 'array', 'max:5'],
             'tag_ids.*' => ['integer', 'distinct', 'exists:tags,id'],
         ];
@@ -42,6 +56,11 @@ class StoreNoteRequest extends FormRequest
     {
         return [
             'status.enum' => 'The status must be one of: draft, published, archived.',
+            'publication_reason_type.required_if' => 'A publication reason type is required for published notes.',
+            'publication_reason_type.required_with' => 'A publication reason type is required with the publication reason message.',
+            'publication_reason_message.required_if' => 'A publication reason message is required for published notes.',
+            'publication_reason_message.required_with' => 'A publication reason message is required with the publication reason type.',
+            'publication_reason_message.not_regex' => 'The publication reason message cannot contain a URL.',
             'tag_ids.*.exists' => 'Each selected tag must already exist.',
         ];
     }
@@ -94,6 +113,26 @@ class StoreNoteRequest extends FormRequest
     public function publishedAt(): string
     {
         return $this->string('published_at')->toString();
+    }
+
+    public function hasPublicationReasonType(): bool
+    {
+        return $this->exists('publication_reason_type');
+    }
+
+    public function publicationReasonType(): PublicationReasonType
+    {
+        return PublicationReasonType::from($this->string('publication_reason_type')->toString());
+    }
+
+    public function hasPublicationReasonMessage(): bool
+    {
+        return $this->exists('publication_reason_message');
+    }
+
+    public function publicationReasonMessage(): string
+    {
+        return $this->string('publication_reason_message')->toString();
     }
 
     /**

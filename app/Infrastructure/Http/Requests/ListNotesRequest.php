@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Requests;
+namespace App\Infrastructure\Http\Requests;
 
-use App\Enums\NoteStatus;
+use App\Domain\Notes\Enums\NoteStatus;
 use Illuminate\Contracts\Validation\Rule as ValidationRuleContract;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Validation\Rule;

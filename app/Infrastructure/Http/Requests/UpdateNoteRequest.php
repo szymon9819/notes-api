@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Requests;
+namespace App\Infrastructure\Http\Requests;
 
-use App\Enums\NoteStatus;
-use Illuminate\Contracts\Validation\Rule as ValidationRuleContract;
-use Illuminate\Contracts\Validation\ValidationRule;
+use App\Domain\Notes\Enums\NoteStatus;
+use App\Domain\Notes\Enums\PublicationReasonType;
+use App\Domain\Notes\ValueObjects\PublicationReason;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Override;
@@ -19,7 +19,7 @@ class UpdateNoteRequest extends FormRequest
     }
 
     /**
-     * @return array<string, ValidationRule|ValidationRuleContract|list<ValidationRule|ValidationRuleContract|string>|string>
+     * @return array<string, mixed>
      */
     public function rules(): array
     {
@@ -29,6 +29,18 @@ class UpdateNoteRequest extends FormRequest
             'status' => ['sometimes', Rule::enum(NoteStatus::class)],
             'is_pinned' => ['sometimes', 'boolean'],
             'published_at' => ['sometimes', 'nullable', 'date'],
+            'publication_reason_type' => [
+                Rule::requiredIf(fn (): bool => $this->input('status') === NoteStatus::Published->value),
+                'required_with:publication_reason_message',
+                Rule::enum(PublicationReasonType::class),
+            ],
+            'publication_reason_message' => [
+                Rule::requiredIf(fn (): bool => $this->input('status') === NoteStatus::Published->value),
+                'required_with:publication_reason_type',
+                'string',
+                'max:' . PublicationReason::MAX_MESSAGE_LENGTH,
+                'not_regex:/(?:https?:\/\/|www\.)/i',
+            ],
             'tag_ids' => ['sometimes', 'array', 'max:5'],
             'tag_ids.*' => ['integer', 'distinct', 'exists:tags,id'],
         ];
@@ -42,6 +54,11 @@ class UpdateNoteRequest extends FormRequest
     {
         return [
             'status.enum' => 'The status must be one of: draft, published, archived.',
+            'publication_reason_type.required' => 'A publication reason type is required for published notes.',
+            'publication_reason_type.required_with' => 'A publication reason type is required with the publication reason message.',
+            'publication_reason_message.required' => 'A publication reason message is required for published notes.',
+            'publication_reason_message.required_with' => 'A publication reason message is required with the publication reason type.',
+            'publication_reason_message.not_regex' => 'The publication reason message cannot contain a URL.',
             'tag_ids.*.exists' => 'Each selected tag must already exist.',
         ];
     }
@@ -104,6 +121,26 @@ class UpdateNoteRequest extends FormRequest
     public function publishedAt(): string
     {
         return $this->string('published_at')->toString();
+    }
+
+    public function hasPublicationReasonType(): bool
+    {
+        return $this->exists('publication_reason_type');
+    }
+
+    public function publicationReasonType(): PublicationReasonType
+    {
+        return PublicationReasonType::from($this->string('publication_reason_type')->toString());
+    }
+
+    public function hasPublicationReasonMessage(): bool
+    {
+        return $this->exists('publication_reason_message');
+    }
+
+    public function publicationReasonMessage(): string
+    {
+        return $this->string('publication_reason_message')->toString();
     }
 
     public function hasTagIds(): bool

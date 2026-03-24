@@ -1,0 +1,222 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Infrastructure\Http\Controllers\Api;
+
+use App\Application\Common\CQRS\CommandBus;
+use App\Application\Common\CQRS\QueryBus;
+use App\Application\Notes\Commands\CreateNote\CreateNoteCommand;
+use App\Application\Notes\Commands\DeleteNote\DeleteNoteCommand;
+use App\Application\Notes\Commands\UpdateNote\UpdateNoteCommand;
+use App\Application\Notes\DTO\NoteData;
+use App\Application\Notes\DTO\PaginatedData;
+use App\Application\Notes\Exceptions\NoteNotFound;
+use App\Application\Notes\Queries\ListNotes\ListNotesQuery;
+use App\Application\Notes\Queries\ShowNote\ShowNoteQuery;
+use App\Domain\Notes\Enums\NoteStatus as DomainNoteStatus;
+use App\Domain\Notes\Exceptions\InvalidPublicationReasonMessage;
+use App\Domain\Notes\Exceptions\PublicationReasonCannotMatchTitle;
+use App\Domain\Notes\Exceptions\PublicationReasonRequired;
+use App\Infrastructure\Http\Controllers\Controller;
+use App\Infrastructure\Http\Requests\ListNotesRequest;
+use App\Infrastructure\Http\Requests\StoreNoteRequest;
+use App\Infrastructure\Http\Requests\UpdateNoteRequest;
+use App\Infrastructure\Presentation\Api\NoteDataPresenter;
+use App\Persistence\Eloquent\Models\Note;
+use App\Persistence\Eloquent\Models\User;
+use DateTimeImmutable;
+use Dedoc\Scramble\Attributes\Endpoint;
+use Dedoc\Scramble\Attributes\Group;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\Response as ResponseAlias;
+
+#[Group('Notes', 'Public demo endpoints for browsing and managing notes.', 10)]
+class NoteController extends Controller
+{
+    public function __construct(
+        private readonly QueryBus $queryBus,
+        private readonly CommandBus $commandBus,
+        private readonly NoteDataPresenter $noteDataPresenter,
+    ) {}
+
+    #[Endpoint('listNotes', 'List notes', 'Returns a paginated list of notes with optional filters.')]
+    public function index(ListNotesRequest $listNotesRequest): JsonResponse
+    {
+        /** @var User $user */
+        $user = $listNotesRequest->user();
+
+        $result = $this->queryBus->ask(new ListNotesQuery(
+            userId: $user->id,
+            perPage: $listNotesRequest->perPage(),
+            search: $listNotesRequest->hasSearchTerm() ? $listNotesRequest->searchTerm() : null,
+            status: $listNotesRequest->hasStatusFilter() ? $listNotesRequest->statusFilter()->value : null,
+            tag: $listNotesRequest->hasTagFilter() ? $listNotesRequest->tagFilter() : null,
+            pinned: $listNotesRequest->hasPinnedFilter() ? $listNotesRequest->pinnedFilter() : null,
+        ));
+
+        if (!$result instanceof PaginatedData) {
+            abort(500);
+        }
+
+        return response()->json($this->noteDataPresenter->presentPaginated($result));
+    }
+
+    #[Endpoint('createNote', 'Create note', 'Creates a new demo note and optionally assigns tags.')]
+    public function store(StoreNoteRequest $storeNoteRequest): JsonResponse
+    {
+        /** @var User $user */
+        $user = $storeNoteRequest->user();
+
+        try {
+            $note = $this->commandBus->dispatch(new CreateNoteCommand(
+                userId: $user->id,
+                title: $storeNoteRequest->title(),
+                content: $storeNoteRequest->hasContent() ? ($storeNoteRequest->contentIsNull() ? null : $storeNoteRequest->content()) : null,
+                status: DomainNoteStatus::from($storeNoteRequest->status()->value),
+                isPinned: $storeNoteRequest->hasPinnedFlag() && $storeNoteRequest->isPinned(),
+                publishedAt: $storeNoteRequest->hasPublishedAt()
+                    ? $this->dateTimeOrNull($storeNoteRequest->publishedAtIsNull() ? null : $storeNoteRequest->publishedAt())
+                    : null,
+                publicationReasonType: $storeNoteRequest->hasPublicationReasonType()
+                    ? $storeNoteRequest->publicationReasonType()
+                    : null,
+                publicationReasonMessage: $storeNoteRequest->hasPublicationReasonMessage()
+                    ? $storeNoteRequest->publicationReasonMessage()
+                    : null,
+                tagIds: $storeNoteRequest->tagIds(),
+            ));
+        } catch (InvalidPublicationReasonMessage|PublicationReasonCannotMatchTitle|PublicationReasonRequired $exception) {
+            throw $this->publicationReasonValidationException($exception);
+        }
+
+        if (!$note instanceof NoteData) {
+            abort(500);
+        }
+
+        return response()->json([
+            'data' => $this->noteDataPresenter->present($note),
+        ], ResponseAlias::HTTP_CREATED);
+    }
+
+    #[Endpoint('showNote', 'Show note', 'Returns the details for a single note.')]
+    public function show(Request $request, Note $note): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        try {
+            $result = $this->queryBus->ask(new ShowNoteQuery(
+                userId: $user->id,
+                noteId: $note->id,
+            ));
+        } catch (NoteNotFound) {
+            abort(ResponseAlias::HTTP_NOT_FOUND);
+        }
+
+        if (!$result instanceof NoteData) {
+            abort(500);
+        }
+
+        return response()->json([
+            'data' => $this->noteDataPresenter->present($result),
+        ]);
+    }
+
+    #[Endpoint('updateNote', 'Update note', 'Updates an existing note and syncs its tags.', 'PATCH')]
+    public function update(UpdateNoteRequest $updateNoteRequest, Note $note): JsonResponse
+    {
+        /** @var User $user */
+        $user = $updateNoteRequest->user();
+
+        try {
+            $result = $this->commandBus->dispatch(new UpdateNoteCommand(
+                userId: $user->id,
+                noteId: $note->id,
+                hasTitle: $updateNoteRequest->hasTitle(),
+                title: $updateNoteRequest->hasTitle() ? $updateNoteRequest->title() : null,
+                hasContent: $updateNoteRequest->hasContent(),
+                content: $updateNoteRequest->hasContent()
+                    ? ($updateNoteRequest->contentIsNull() ? null : $updateNoteRequest->content())
+                    : null,
+                hasStatus: $updateNoteRequest->hasStatus(),
+                status: $updateNoteRequest->hasStatus()
+                    ? DomainNoteStatus::from($updateNoteRequest->status()->value)
+                    : null,
+                hasPinnedState: $updateNoteRequest->hasPinnedFlag(),
+                isPinned: $updateNoteRequest->hasPinnedFlag() && $updateNoteRequest->isPinned(),
+                hasPublishedAt: $updateNoteRequest->hasPublishedAt(),
+                publishedAt: $updateNoteRequest->hasPublishedAt()
+                    ? $this->dateTimeOrNull($updateNoteRequest->publishedAtIsNull() ? null : $updateNoteRequest->publishedAt())
+                    : null,
+                hasPublicationReasonType: $updateNoteRequest->hasPublicationReasonType(),
+                publicationReasonType: $updateNoteRequest->hasPublicationReasonType()
+                    ? $updateNoteRequest->publicationReasonType()
+                    : null,
+                hasPublicationReasonMessage: $updateNoteRequest->hasPublicationReasonMessage(),
+                publicationReasonMessage: $updateNoteRequest->hasPublicationReasonMessage()
+                    ? $updateNoteRequest->publicationReasonMessage()
+                    : null,
+                hasTagIds: $updateNoteRequest->hasTagIds(),
+                tagIds: $updateNoteRequest->hasTagIds() ? $updateNoteRequest->tagIds() : [],
+            ));
+        } catch (NoteNotFound) {
+            abort(ResponseAlias::HTTP_NOT_FOUND);
+        } catch (InvalidPublicationReasonMessage|PublicationReasonCannotMatchTitle|PublicationReasonRequired $exception) {
+            throw $this->publicationReasonValidationException($exception);
+        }
+
+        if (!$result instanceof NoteData) {
+            abort(500);
+        }
+
+        return response()->json([
+            'data' => $this->noteDataPresenter->present($result),
+        ]);
+    }
+
+    #[Endpoint('deleteNote', 'Delete note', 'Deletes the selected note.')]
+    public function destroy(Request $request, Note $note): Response
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        try {
+            $this->commandBus->dispatch(new DeleteNoteCommand(
+                userId: $user->id,
+                noteId: $note->id,
+            ));
+        } catch (NoteNotFound) {
+            abort(ResponseAlias::HTTP_NOT_FOUND);
+        }
+
+        return response()->noContent();
+    }
+
+    private function dateTimeOrNull(?string $value): ?DateTimeImmutable
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        return new DateTimeImmutable($value);
+    }
+
+    private function publicationReasonValidationException(
+        InvalidPublicationReasonMessage|PublicationReasonCannotMatchTitle|PublicationReasonRequired $exception,
+    ): ValidationException {
+        if ($exception instanceof PublicationReasonRequired) {
+            return ValidationException::withMessages([
+                'publication_reason_type' => [$exception->getMessage()],
+                'publication_reason_message' => [$exception->getMessage()],
+            ]);
+        }
+
+        return ValidationException::withMessages([
+            'publication_reason_message' => [$exception->getMessage()],
+        ]);
+    }
+}

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Resources;
+namespace App\Infrastructure\Presentation\Resources;
 
-use App\Models\User;
+use App\Persistence\Eloquent\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Override;
