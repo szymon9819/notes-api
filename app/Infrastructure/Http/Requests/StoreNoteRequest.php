@@ -34,11 +34,13 @@ class StoreNoteRequest extends FormRequest
             'published_at' => ['nullable', 'date'],
             'publication_reason_type' => [
                 'required_if:status,published',
+                'nullable',
                 'required_with:publication_reason_message',
                 Rule::enum(PublicationReasonType::class),
             ],
             'publication_reason_message' => [
                 'required_if:status,published',
+                'nullable',
                 'required_with:publication_reason_type',
                 'string',
                 'max:' . PublicationReason::MAX_MESSAGE_LENGTH,

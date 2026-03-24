@@ -80,6 +80,24 @@ final class NoteStoreEndpointTest extends FeatureTestCase
             ->assertJsonValidationErrors(['publication_reason_type', 'publication_reason_message']);
     }
 
+    public function test_store_allows_null_publication_reason_for_non_published_note(): void
+    {
+        $this->actingAsApiUser();
+
+        $testResponse = $this->postJson(route('notes.store'), [
+            'title' => 'Draft note with explicit nulls',
+            'status' => 'draft',
+            'publication_reason_type' => null,
+            'publication_reason_message' => null,
+        ]);
+
+        $testResponse
+            ->assertCreated()
+            ->assertJsonPath('data.status', 'draft')
+            ->assertJsonPath('data.publication_reason_type', null)
+            ->assertJsonPath('data.publication_reason_message', null);
+    }
+
     public function test_store_rejects_publication_reason_with_url(): void
     {
         $this->actingAsApiUser();
