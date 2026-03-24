@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Models\Note;
-use App\Models\Tag;
+use App\Persistence\Eloquent\Models\Note;
+use App\Persistence\Eloquent\Models\Tag;
 
 final class NotesIndexEndpointTest extends FeatureTestCase
 {
