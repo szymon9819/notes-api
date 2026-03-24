@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Models\Note;
-use App\Models\Tag;
+use App\Persistence\Eloquent\Models\Note;
+use App\Persistence\Eloquent\Models\Tag;
 
 final class NoteUpdateEndpointTest extends FeatureTestCase
 {
@@ -23,6 +23,8 @@ final class NoteUpdateEndpointTest extends FeatureTestCase
         $testResponse = $this->patchJson(route('notes.update', $note), [
             'title' => 'Updated title',
             'status' => 'published',
+            'publication_reason_type' => 'decision',
+            'publication_reason_message' => 'Publish the approved revision.',
             'tag_ids' => [$newTag->id],
         ]);
 
@@ -31,6 +33,7 @@ final class NoteUpdateEndpointTest extends FeatureTestCase
             ->assertJsonPath('data.user.id', $user->id)
             ->assertJsonPath('data.title', 'Updated title')
             ->assertJsonPath('data.status', 'published')
+            ->assertJsonPath('data.publication_reason_type', 'decision')
             ->assertJsonPath('data.tags.0.id', $newTag->id);
 
         $this->assertDatabaseHas('notes', [
@@ -117,5 +120,37 @@ final class NoteUpdateEndpointTest extends FeatureTestCase
         $this->patchJson(route('notes.update', $note), [
             'title' => 'Should not update',
         ])->assertNotFound();
+    }
+
+    public function test_update_requires_publication_reason_when_publishing_a_note(): void
+    {
+        $user = $this->actingAsApiUser();
+        $note = Note::factory()->for($user)->draft()->create();
+
+        $testResponse = $this->patchJson(route('notes.update', $note), [
+            'status' => 'published',
+        ]);
+
+        $testResponse
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['publication_reason_type', 'publication_reason_message']);
+    }
+
+    public function test_update_rejects_publication_reason_matching_note_title(): void
+    {
+        $user = $this->actingAsApiUser();
+        $note = Note::factory()->for($user)->create([
+            'title' => 'Engineering update',
+            'publication_reason_type' => 'knowledge',
+            'publication_reason_message' => 'Release notes',
+        ]);
+
+        $testResponse = $this->patchJson(route('notes.update', $note), [
+            'title' => 'Release notes',
+        ]);
+
+        $testResponse
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['publication_reason_message']);
     }
 }

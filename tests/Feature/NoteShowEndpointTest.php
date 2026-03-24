@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Models\Note;
-use App\Models\Tag;
-use App\Models\User;
+use App\Persistence\Eloquent\Models\Note;
+use App\Persistence\Eloquent\Models\Tag;
+use App\Persistence\Eloquent\Models\User;
 
 final class NoteShowEndpointTest extends FeatureTestCase
 {
