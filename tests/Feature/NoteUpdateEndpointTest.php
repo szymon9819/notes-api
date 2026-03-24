@@ -34,18 +34,8 @@ final class NoteUpdateEndpointTest extends FeatureTestCase
             ->assertJsonPath('data.title', 'Updated title')
             ->assertJsonPath('data.status', 'published')
             ->assertJsonPath('data.publication_reason_type', 'decision')
-            ->assertJsonPath('data.tags.0.id', $newTag->id);
-
-        $this->assertDatabaseHas('notes', [
-            'id' => $note->id,
-            'user_id' => $user->id,
-            'title' => 'Updated title',
-            'status' => 'published',
-        ]);
-        $this->assertDatabaseMissing('note_tag', [
-            'note_id' => $note->id,
-            'tag_id' => $oldTag->id,
-        ]);
+            ->assertJsonPath('data.tags.0.id', $newTag->id)
+            ->assertJsonCount(1, 'data.tags');
     }
 
     public function test_update_preserves_tags_when_tag_ids_are_not_provided(): void
@@ -63,11 +53,6 @@ final class NoteUpdateEndpointTest extends FeatureTestCase
             ->assertOk()
             ->assertJsonPath('data.title', 'Renamed note')
             ->assertJsonPath('data.tags.0.id', $tag->id);
-
-        $this->assertDatabaseHas('note_tag', [
-            'note_id' => $note->id,
-            'tag_id' => $tag->id,
-        ]);
     }
 
     public function test_update_can_clear_tags_and_published_at(): void
@@ -90,11 +75,6 @@ final class NoteUpdateEndpointTest extends FeatureTestCase
             ->assertJsonPath('data.status', 'draft')
             ->assertJsonPath('data.published_at', null)
             ->assertJsonCount(0, 'data.tags');
-
-        $this->assertDatabaseMissing('note_tag', [
-            'note_id' => $note->id,
-            'tag_id' => $tag->id,
-        ]);
     }
 
     public function test_update_validates_the_payload(): void

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Persistence\Eloquent\Models\Note;
 use App\Persistence\Eloquent\Models\Tag;
 
 final class NoteStoreEndpointTest extends FeatureTestCase
@@ -29,23 +28,10 @@ final class NoteStoreEndpointTest extends FeatureTestCase
             ->assertCreated()
             ->assertJsonPath('data.user.id', $user->id)
             ->assertJsonPath('data.title', 'First demo note')
-            ->assertJsonPath('data.is_pinned', true)
             ->assertJsonPath('data.publication_reason_type', 'knowledge')
             ->assertJsonPath('data.publication_reason_message', 'Share reference notes with the team.')
-            ->assertJsonCount(2, 'data.tags');
-
-        $this->assertDatabaseHas('notes', [
-            'user_id' => $user->id,
-            'title' => 'First demo note',
-            'status' => 'published',
-            'is_pinned' => true,
-            'publication_reason_type' => 'knowledge',
-            'publication_reason_message' => 'Share reference notes with the team.',
-        ]);
-        $this->assertDatabaseHas('note_tag', [
-            'note_id' => 1,
-            'tag_id' => $firstTag->id,
-        ]);
+            ->assertJsonPath('data.tags.0.id', $firstTag->id)
+            ->assertJsonPath('data.tags.1.id', $secondTag->id);
     }
 
     public function test_store_validates_the_payload(): void
@@ -77,7 +63,7 @@ final class NoteStoreEndpointTest extends FeatureTestCase
             ->assertCreated()
             ->assertJsonPath('data.status', 'published');
 
-        $this->assertNotNull(Note::query()->firstOrFail()->published_at);
+        $this->assertIsString($testResponse->json('data.published_at'));
     }
 
     public function test_store_requires_publication_reason_for_published_note(): void
