@@ -63,23 +63,15 @@ final class UpdateNoteHandlerTest extends TestCase
         $this->expectException(PublicationReasonCannotMatchTitle::class);
 
         $updateNoteHandler->handle(new UpdateNoteCommand(
-            userId: 1,
-            noteId: 10,
-            hasTitle: true,
-            title: 'Release notes',
-            hasContent: false,
+            userId: UserId::fromInt(1),
+            noteId: NoteId::fromInt(10),
             content: null,
-            hasStatus: false,
-            status: null,
-            hasPinnedState: false,
+            title: 'Release notes',
+            status: NoteStatus::Published,
             isPinned: false,
-            hasPublishedAt: false,
-            publishedAt: null,
-            hasPublicationReasonType: false,
-            publicationReasonType: null,
-            hasPublicationReasonMessage: false,
-            publicationReasonMessage: null,
-            hasTagIds: false,
+            publishedAt: new DateTimeImmutable('2026-03-24T09:00:00+00:00'),
+            publicationReasonType: PublicationReasonType::Knowledge,
+            publicationReasonMessage: 'Release notes',
             tagIds: [],
         ));
     }

@@ -20,13 +20,13 @@ final class NoteUpdateEndpointTest extends FeatureTestCase
 
         $note->tags()->attach($oldTag);
 
-        $testResponse = $this->patchJson(route('notes.update', $note), [
+        $testResponse = $this->putJson(route('notes.update', $note), $this->payloadFor($note, [
             'title' => 'Updated title',
             'status' => 'published',
             'publication_reason_type' => 'decision',
             'publication_reason_message' => 'Publish the approved revision.',
             'tag_ids' => [$newTag->id],
-        ]);
+        ]));
 
         $testResponse
             ->assertOk()
@@ -45,9 +45,9 @@ final class NoteUpdateEndpointTest extends FeatureTestCase
         $tag = Tag::factory()->create();
         $note->tags()->attach($tag);
 
-        $testResponse = $this->patchJson(route('notes.update', $note), [
+        $testResponse = $this->putJson(route('notes.update', $note), $this->payloadFor($note, [
             'title' => 'Renamed note',
-        ]);
+        ]));
 
         $testResponse
             ->assertOk()
@@ -64,11 +64,13 @@ final class NoteUpdateEndpointTest extends FeatureTestCase
         $tag = Tag::factory()->create();
         $note->tags()->attach($tag);
 
-        $testResponse = $this->patchJson(route('notes.update', $note), [
+        $testResponse = $this->putJson(route('notes.update', $note), $this->payloadFor($note, [
             'status' => 'draft',
             'published_at' => null,
+            'publication_reason_type' => null,
+            'publication_reason_message' => null,
             'tag_ids' => [],
-        ]);
+        ]));
 
         $testResponse
             ->assertOk()
@@ -82,10 +84,10 @@ final class NoteUpdateEndpointTest extends FeatureTestCase
         $user = $this->actingAsApiUser();
         $note = Note::factory()->for($user)->create();
 
-        $testResponse = $this->patchJson(route('notes.update', $note), [
+        $testResponse = $this->putJson(route('notes.update', $note), $this->payloadFor($note, [
             'status' => 'wrong',
             'tag_ids' => [123456],
-        ]);
+        ]));
 
         $testResponse
             ->assertUnprocessable()
@@ -97,9 +99,9 @@ final class NoteUpdateEndpointTest extends FeatureTestCase
         $this->actingAsApiUser();
         $note = Note::factory()->create();
 
-        $this->patchJson(route('notes.update', $note), [
+        $this->putJson(route('notes.update', $note), $this->payloadFor($note, [
             'title' => 'Should not update',
-        ])->assertNotFound();
+        ]))->assertNotFound();
     }
 
     public function test_update_requires_publication_reason_when_publishing_a_note(): void
@@ -107,9 +109,11 @@ final class NoteUpdateEndpointTest extends FeatureTestCase
         $user = $this->actingAsApiUser();
         $note = Note::factory()->for($user)->draft()->create();
 
-        $testResponse = $this->patchJson(route('notes.update', $note), [
+        $testResponse = $this->putJson(route('notes.update', $note), $this->payloadFor($note, [
             'status' => 'published',
-        ]);
+            'publication_reason_type' => null,
+            'publication_reason_message' => null,
+        ]));
 
         $testResponse
             ->assertUnprocessable()
@@ -125,12 +129,33 @@ final class NoteUpdateEndpointTest extends FeatureTestCase
             'publication_reason_message' => 'Release notes',
         ]);
 
-        $testResponse = $this->patchJson(route('notes.update', $note), [
+        $testResponse = $this->putJson(route('notes.update', $note), $this->payloadFor($note, [
             'title' => 'Release notes',
-        ]);
+        ]));
 
         $testResponse
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['publication_reason_message']);
+    }
+
+    /**
+     * @param  array<string, mixed>  $overrides
+     * @return array<string, mixed>
+     */
+    private function payloadFor(Note $note, array $overrides = []): array
+    {
+        /** @var array<string, mixed> $payload */
+        $payload = [
+            'title' => $note->title,
+            'content' => $note->content,
+            'status' => $note->status->value,
+            'is_pinned' => $note->is_pinned,
+            'published_at' => $note->published_at?->toAtomString(),
+            'publication_reason_type' => $note->publication_reason_type,
+            'publication_reason_message' => $note->publication_reason_message,
+            'tag_ids' => $note->tags()->pluck('tags.id')->all(),
+        ];
+
+        return array_replace($payload, $overrides);
     }
 }

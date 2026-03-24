@@ -8,8 +8,6 @@ use App\Application\Common\CQRS\QueryHandler;
 use App\Application\Notes\Contracts\NoteQueryRepository;
 use App\Application\Notes\DTO\NoteData;
 use App\Application\Notes\Exceptions\NoteNotFound;
-use App\Domain\Common\ValueObjects\UserId;
-use App\Domain\Notes\ValueObjects\NoteId;
 
 final readonly class ShowNoteHandler implements QueryHandler
 {
@@ -20,12 +18,12 @@ final readonly class ShowNoteHandler implements QueryHandler
     public function handle(ShowNoteQuery $showNoteQuery): NoteData
     {
         $note = $this->noteQueryRepository->findOwnedById(
-            UserId::fromInt($showNoteQuery->userId),
-            NoteId::fromInt($showNoteQuery->noteId),
+            $showNoteQuery->userId,
+            $showNoteQuery->noteId,
         );
 
         if (!$note instanceof NoteData) {
-            throw NoteNotFound::forId($showNoteQuery->noteId);
+            throw NoteNotFound::forId($showNoteQuery->noteId->value);
         }
 
         return $note;

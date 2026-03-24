@@ -8,6 +8,7 @@ use App\Application\Notes\Contracts\TagQueryRepository;
 use App\Application\Notes\DTO\TagData;
 use App\Application\Notes\Queries\ListTags\ListTagsHandler;
 use App\Application\Notes\Queries\ListTags\ListTagsQuery;
+use App\Domain\Common\ValueObjects\UserId;
 use PHPUnit\Framework\TestCase;
 
 final class ListTagsHandlerTest extends TestCase
@@ -25,7 +26,7 @@ final class ListTagsHandlerTest extends TestCase
 
         $listTagsHandler = new ListTagsHandler($tagQueryRepository);
 
-        $result = $listTagsHandler->handle(new ListTagsQuery(userId: 1));
+        $result = $listTagsHandler->handle(new ListTagsQuery(userId: UserId::fromInt(1)));
 
         $this->assertSame($tags, $result);
     }

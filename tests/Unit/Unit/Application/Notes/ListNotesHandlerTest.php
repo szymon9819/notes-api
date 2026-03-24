@@ -8,6 +8,7 @@ use App\Application\Notes\Contracts\NoteQueryRepository;
 use App\Application\Notes\DTO\PaginatedData;
 use App\Application\Notes\Queries\ListNotes\ListNotesHandler;
 use App\Application\Notes\Queries\ListNotes\ListNotesQuery;
+use App\Domain\Common\ValueObjects\UserId;
 use PHPUnit\Framework\TestCase;
 
 final class ListNotesHandlerTest extends TestCase
@@ -24,7 +25,7 @@ final class ListNotesHandlerTest extends TestCase
         $listNotesHandler = new ListNotesHandler($noteQueryRepository);
 
         $result = $listNotesHandler->handle(new ListNotesQuery(
-            userId: 1,
+            userId: UserId::fromInt(1),
             perPage: 15,
         ));
 

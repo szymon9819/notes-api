@@ -9,6 +9,8 @@ use App\Application\Notes\Commands\DeleteNote\DeleteNoteCommand;
 use App\Application\Notes\Commands\DeleteNote\DeleteNoteHandler;
 use App\Application\Notes\Contracts\NoteCommandRepository;
 use App\Application\Notes\Exceptions\NoteNotFound;
+use App\Domain\Common\ValueObjects\UserId;
+use App\Domain\Notes\ValueObjects\NoteId;
 use PHPUnit\Framework\TestCase;
 
 final class DeleteNoteHandlerTest extends TestCase
@@ -35,8 +37,8 @@ final class DeleteNoteHandlerTest extends TestCase
         $this->expectException(NoteNotFound::class);
 
         $deleteNoteHandler->handle(new DeleteNoteCommand(
-            userId: 1,
-            noteId: 99,
+            userId: UserId::fromInt(1),
+            noteId: NoteId::fromInt(99),
         ));
     }
 }

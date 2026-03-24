@@ -18,7 +18,13 @@ Route::get('/docs', fn (): RedirectResponse => to_route('scramble.docs.ui'))->na
 Route::post('/login', [AuthTokenController::class, 'login'])->name('auth.login');
 
 Route::middleware('auth:sanctum')->group(function (): void {
-    Route::apiResource('notes', NoteController::class);
+    Route::prefix('notes')->name('notes.')->group(function (): void {
+        Route::get('/', [NoteController::class, 'index'])->name('index');
+        Route::post('/', [NoteController::class, 'store'])->name('store');
+        Route::get('/{note}', [NoteController::class, 'show'])->name('show');
+        Route::put('/{note}', [NoteController::class, 'update'])->name('update');
+        Route::delete('/{note}', [NoteController::class, 'destroy'])->name('destroy');
+    });
 
     Route::get('/tags', [TagController::class, 'index'])->name('tags.index');
 });

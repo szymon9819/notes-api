@@ -50,7 +50,7 @@ final class CreateNoteHandlerTest extends TestCase
         $this->expectException(PublicationReasonRequired::class);
 
         $createNoteHandler->handle(new CreateNoteCommand(
-            userId: 1,
+            userId: UserId::fromInt(1),
             title: 'Publish the roadmap',
             content: 'Roadmap details.',
             status: NoteStatus::Published,
@@ -83,7 +83,7 @@ final class CreateNoteHandlerTest extends TestCase
         );
 
         $noteData = $createNoteHandler->handle(new CreateNoteCommand(
-            userId: 1,
+            userId: UserId::fromInt(1),
             title: 'Publish the roadmap',
             content: 'Roadmap details.',
             status: NoteStatus::Published,

@@ -11,7 +11,6 @@ use App\Application\Notes\Contracts\NoteCommandRepository;
 use App\Application\Notes\Contracts\NoteQueryRepository;
 use App\Application\Notes\DTO\NoteData;
 use App\Application\Notes\Exceptions\NoteNotFound;
-use App\Domain\Common\ValueObjects\UserId;
 use App\Domain\Notes\Entities\Note;
 use App\Domain\Notes\ValueObjects\PublicationReason;
 use App\Domain\Notes\ValueObjects\TagId;
@@ -28,7 +27,7 @@ final readonly class CreateNoteHandler implements CommandHandler
     public function handle(CreateNoteCommand $createNoteCommand): NoteData
     {
         $note = Note::create(
-            userId: UserId::fromInt($createNoteCommand->userId),
+            userId: $createNoteCommand->userId,
             title: $createNoteCommand->title,
             content: $createNoteCommand->content,
             noteStatus: $createNoteCommand->status,

@@ -24,7 +24,7 @@ final class EloquentNoteQueryRepository implements NoteQueryRepository
     {
         $lengthAwarePaginator = Note::query()
             ->with(['tags', 'user'])
-            ->where('user_id', $listNotesQuery->userId)
+            ->where('user_id', $listNotesQuery->userId->value)
             ->when(
                 $listNotesQuery->search !== null,
                 fn (Builder $builder): Builder => $builder->where(function (Builder $queryBuilder) use ($listNotesQuery): void {

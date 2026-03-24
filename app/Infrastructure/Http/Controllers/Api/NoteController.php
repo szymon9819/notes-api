@@ -14,10 +14,12 @@ use App\Application\Notes\DTO\PaginatedData;
 use App\Application\Notes\Exceptions\NoteNotFound;
 use App\Application\Notes\Queries\ListNotes\ListNotesQuery;
 use App\Application\Notes\Queries\ShowNote\ShowNoteQuery;
+use App\Domain\Common\ValueObjects\UserId;
 use App\Domain\Notes\Enums\NoteStatus as DomainNoteStatus;
 use App\Domain\Notes\Exceptions\InvalidPublicationReasonMessage;
 use App\Domain\Notes\Exceptions\PublicationReasonCannotMatchTitle;
 use App\Domain\Notes\Exceptions\PublicationReasonRequired;
+use App\Domain\Notes\ValueObjects\NoteId;
 use App\Infrastructure\Http\Controllers\Controller;
 use App\Infrastructure\Http\Requests\ListNotesRequest;
 use App\Infrastructure\Http\Requests\StoreNoteRequest;
@@ -50,7 +52,7 @@ class NoteController extends Controller
         $user = $listNotesRequest->user();
 
         $result = $this->queryBus->ask(new ListNotesQuery(
-            userId: $user->id,
+            userId: UserId::fromInt($user->id),
             perPage: $listNotesRequest->perPage(),
             search: $listNotesRequest->hasSearchTerm() ? $listNotesRequest->searchTerm() : null,
             status: $listNotesRequest->hasStatusFilter() ? $listNotesRequest->statusFilter()->value : null,
@@ -73,7 +75,7 @@ class NoteController extends Controller
 
         try {
             $note = $this->commandBus->dispatch(new CreateNoteCommand(
-                userId: $user->id,
+                userId: UserId::fromInt($user->id),
                 title: $storeNoteRequest->title(),
                 content: $storeNoteRequest->hasContent() ? ($storeNoteRequest->contentIsNull() ? null : $storeNoteRequest->content()) : null,
                 status: DomainNoteStatus::from($storeNoteRequest->status()->value),
@@ -110,8 +112,8 @@ class NoteController extends Controller
 
         try {
             $result = $this->queryBus->ask(new ShowNoteQuery(
-                userId: $user->id,
-                noteId: $note->id,
+                userId: UserId::fromInt($user->id),
+                noteId: NoteId::fromInt($note->id),
             ));
         } catch (NoteNotFound) {
             abort(ResponseAlias::HTTP_NOT_FOUND);
@@ -126,7 +128,7 @@ class NoteController extends Controller
         ]);
     }
 
-    #[Endpoint('updateNote', 'Update note', 'Updates an existing note and syncs its tags.', 'PATCH')]
+    #[Endpoint('updateNote', 'Update note', 'Replaces an existing note and syncs its tags.', 'PUT')]
     public function update(UpdateNoteRequest $updateNoteRequest, Note $note): JsonResponse
     {
         /** @var User $user */
@@ -134,34 +136,16 @@ class NoteController extends Controller
 
         try {
             $result = $this->commandBus->dispatch(new UpdateNoteCommand(
-                userId: $user->id,
-                noteId: $note->id,
-                hasTitle: $updateNoteRequest->hasTitle(),
-                title: $updateNoteRequest->hasTitle() ? $updateNoteRequest->title() : null,
-                hasContent: $updateNoteRequest->hasContent(),
-                content: $updateNoteRequest->hasContent()
-                    ? ($updateNoteRequest->contentIsNull() ? null : $updateNoteRequest->content())
-                    : null,
-                hasStatus: $updateNoteRequest->hasStatus(),
-                status: $updateNoteRequest->hasStatus()
-                    ? DomainNoteStatus::from($updateNoteRequest->status()->value)
-                    : null,
-                hasPinnedState: $updateNoteRequest->hasPinnedFlag(),
-                isPinned: $updateNoteRequest->hasPinnedFlag() && $updateNoteRequest->isPinned(),
-                hasPublishedAt: $updateNoteRequest->hasPublishedAt(),
-                publishedAt: $updateNoteRequest->hasPublishedAt()
-                    ? $this->dateTimeOrNull($updateNoteRequest->publishedAtIsNull() ? null : $updateNoteRequest->publishedAt())
-                    : null,
-                hasPublicationReasonType: $updateNoteRequest->hasPublicationReasonType(),
-                publicationReasonType: $updateNoteRequest->hasPublicationReasonType()
-                    ? $updateNoteRequest->publicationReasonType()
-                    : null,
-                hasPublicationReasonMessage: $updateNoteRequest->hasPublicationReasonMessage(),
-                publicationReasonMessage: $updateNoteRequest->hasPublicationReasonMessage()
-                    ? $updateNoteRequest->publicationReasonMessage()
-                    : null,
-                hasTagIds: $updateNoteRequest->hasTagIds(),
-                tagIds: $updateNoteRequest->hasTagIds() ? $updateNoteRequest->tagIds() : [],
+                userId: UserId::fromInt($user->id),
+                noteId: NoteId::fromInt($note->id),
+                content: $updateNoteRequest->content(),
+                title: $updateNoteRequest->title(),
+                status: DomainNoteStatus::from($updateNoteRequest->status()->value),
+                isPinned: $updateNoteRequest->isPinned(),
+                publishedAt: $this->dateTimeOrNull($updateNoteRequest->publishedAt()),
+                publicationReasonType: $updateNoteRequest->publicationReasonType(),
+                publicationReasonMessage: $updateNoteRequest->publicationReasonMessage(),
+                tagIds: $updateNoteRequest->tagIds(),
             ));
         } catch (NoteNotFound) {
             abort(ResponseAlias::HTTP_NOT_FOUND);
@@ -186,8 +170,8 @@ class NoteController extends Controller
 
         try {
             $this->commandBus->dispatch(new DeleteNoteCommand(
-                userId: $user->id,
-                noteId: $note->id,
+                userId: UserId::fromInt($user->id),
+                noteId: NoteId::fromInt($note->id),
             ));
         } catch (NoteNotFound) {
             abort(ResponseAlias::HTTP_NOT_FOUND);

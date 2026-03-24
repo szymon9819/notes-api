@@ -9,6 +9,8 @@ use App\Application\Notes\DTO\NoteData;
 use App\Application\Notes\DTO\UserData;
 use App\Application\Notes\Queries\ShowNote\ShowNoteHandler;
 use App\Application\Notes\Queries\ShowNote\ShowNoteQuery;
+use App\Domain\Common\ValueObjects\UserId;
+use App\Domain\Notes\ValueObjects\NoteId;
 use PHPUnit\Framework\TestCase;
 
 final class ShowNoteHandlerTest extends TestCase
@@ -39,8 +41,8 @@ final class ShowNoteHandlerTest extends TestCase
         $showNoteHandler = new ShowNoteHandler($noteQueryRepository);
 
         $result = $showNoteHandler->handle(new ShowNoteQuery(
-            userId: 1,
-            noteId: 10,
+            userId: UserId::fromInt(1),
+            noteId: NoteId::fromInt(10),
         ));
 
         $this->assertSame($noteData, $result);

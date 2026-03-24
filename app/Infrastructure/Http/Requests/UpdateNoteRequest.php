@@ -24,24 +24,26 @@ class UpdateNoteRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => ['sometimes', 'string', 'max:120'],
-            'content' => ['sometimes', 'nullable', 'string', 'max:5000'],
-            'status' => ['sometimes', Rule::enum(NoteStatus::class)],
-            'is_pinned' => ['sometimes', 'boolean'],
-            'published_at' => ['sometimes', 'nullable', 'date'],
+            'title' => ['required', 'string', 'max:120'],
+            'content' => ['present', 'nullable', 'string', 'max:5000'],
+            'status' => ['required', Rule::enum(NoteStatus::class)],
+            'is_pinned' => ['required', 'boolean'],
+            'published_at' => ['present', 'nullable', 'date'],
             'publication_reason_type' => [
                 Rule::requiredIf(fn (): bool => $this->input('status') === NoteStatus::Published->value),
+                'nullable',
                 'required_with:publication_reason_message',
                 Rule::enum(PublicationReasonType::class),
             ],
             'publication_reason_message' => [
                 Rule::requiredIf(fn (): bool => $this->input('status') === NoteStatus::Published->value),
+                'nullable',
                 'required_with:publication_reason_type',
                 'string',
                 'max:' . PublicationReason::MAX_MESSAGE_LENGTH,
                 'not_regex:/(?:https?:\/\/|www\.)/i',
             ],
-            'tag_ids' => ['sometimes', 'array', 'max:5'],
+            'tag_ids' => ['present', 'array', 'max:5'],
             'tag_ids.*' => ['integer', 'distinct', 'exists:tags,id'],
         ];
     }
@@ -63,34 +65,18 @@ class UpdateNoteRequest extends FormRequest
         ];
     }
 
-    public function hasTitle(): bool
-    {
-        return $this->exists('title');
-    }
-
     public function title(): string
     {
         return $this->string('title')->toString();
     }
 
-    public function hasContent(): bool
+    public function content(): ?string
     {
-        return $this->exists('content');
-    }
+        if ($this->input('content') === null) {
+            return null;
+        }
 
-    public function contentIsNull(): bool
-    {
-        return $this->input('content') === null;
-    }
-
-    public function content(): string
-    {
         return $this->string('content')->toString();
-    }
-
-    public function hasStatus(): bool
-    {
-        return $this->exists('status');
     }
 
     public function status(): NoteStatus
@@ -98,54 +84,36 @@ class UpdateNoteRequest extends FormRequest
         return NoteStatus::from($this->string('status')->toString());
     }
 
-    public function hasPinnedFlag(): bool
-    {
-        return $this->exists('is_pinned');
-    }
-
     public function isPinned(): bool
     {
         return $this->boolean('is_pinned');
     }
 
-    public function hasPublishedAt(): bool
+    public function publishedAt(): ?string
     {
-        return $this->exists('published_at');
-    }
+        if ($this->input('published_at') === null) {
+            return null;
+        }
 
-    public function publishedAtIsNull(): bool
-    {
-        return $this->input('published_at') === null;
-    }
-
-    public function publishedAt(): string
-    {
         return $this->string('published_at')->toString();
     }
 
-    public function hasPublicationReasonType(): bool
+    public function publicationReasonType(): ?PublicationReasonType
     {
-        return $this->exists('publication_reason_type');
-    }
+        if ($this->input('publication_reason_type') === null) {
+            return null;
+        }
 
-    public function publicationReasonType(): PublicationReasonType
-    {
         return PublicationReasonType::from($this->string('publication_reason_type')->toString());
     }
 
-    public function hasPublicationReasonMessage(): bool
+    public function publicationReasonMessage(): ?string
     {
-        return $this->exists('publication_reason_message');
-    }
+        if ($this->input('publication_reason_message') === null) {
+            return null;
+        }
 
-    public function publicationReasonMessage(): string
-    {
         return $this->string('publication_reason_message')->toString();
-    }
-
-    public function hasTagIds(): bool
-    {
-        return $this->exists('tag_ids');
     }
 
     /**

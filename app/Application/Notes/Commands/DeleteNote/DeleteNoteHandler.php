@@ -8,8 +8,6 @@ use App\Application\Common\Contracts\TransactionManager;
 use App\Application\Common\CQRS\CommandHandler;
 use App\Application\Notes\Contracts\NoteCommandRepository;
 use App\Application\Notes\Exceptions\NoteNotFound;
-use App\Domain\Common\ValueObjects\UserId;
-use App\Domain\Notes\ValueObjects\NoteId;
 
 final readonly class DeleteNoteHandler implements CommandHandler
 {
@@ -22,13 +20,13 @@ final readonly class DeleteNoteHandler implements CommandHandler
     {
         $deleted = $this->transactionManager->run(
             fn (): bool => $this->noteCommandRepository->deleteOwnedById(
-                UserId::fromInt($deleteNoteCommand->userId),
-                NoteId::fromInt($deleteNoteCommand->noteId),
+                $deleteNoteCommand->userId,
+                $deleteNoteCommand->noteId,
             ),
         );
 
         if (!$deleted) {
-            throw NoteNotFound::forId($deleteNoteCommand->noteId);
+            throw NoteNotFound::forId($deleteNoteCommand->noteId->value);
         }
     }
 }

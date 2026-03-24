@@ -7,6 +7,7 @@ namespace App\Infrastructure\Http\Controllers\Api;
 use App\Application\Common\CQRS\QueryBus;
 use App\Application\Notes\DTO\TagData;
 use App\Application\Notes\Queries\ListTags\ListTagsQuery;
+use App\Domain\Common\ValueObjects\UserId;
 use App\Infrastructure\Http\Controllers\Controller;
 use App\Infrastructure\Presentation\Api\TagDataPresenter;
 use App\Persistence\Eloquent\Models\User;
@@ -30,7 +31,7 @@ class TagController extends Controller
         $user = $request->user();
 
         $result = $this->queryBus->ask(new ListTagsQuery(
-            userId: $user->id,
+            userId: UserId::fromInt($user->id),
         ));
 
         if (!is_array($result)) {
