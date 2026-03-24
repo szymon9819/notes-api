@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use App\Models\Note;
-use App\Models\Tag;
-use App\Models\User;
+use App\Persistence\Eloquent\Models\Note;
+use App\Persistence\Eloquent\Models\Tag;
+use App\Persistence\Eloquent\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
