@@ -7,6 +7,7 @@ namespace App\Infrastructure\Http\Requests;
 use App\Domain\Notes\Enums\NoteStatus;
 use App\Domain\Notes\Enums\PublicationReasonType;
 use App\Domain\Notes\ValueObjects\PublicationReason;
+use DateTimeImmutable;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Override;
@@ -89,13 +90,13 @@ class UpdateNoteRequest extends FormRequest
         return $this->boolean('is_pinned');
     }
 
-    public function publishedAt(): ?string
+    public function publishedAt(): ?DateTimeImmutable
     {
         if ($this->input('published_at') === null) {
             return null;
         }
 
-        return $this->string('published_at')->toString();
+        return new DateTimeImmutable($this->string('published_at')->toString());
     }
 
     public function publicationReasonType(): ?PublicationReasonType
@@ -126,12 +127,6 @@ class UpdateNoteRequest extends FormRequest
         foreach ($this->array('tag_ids') as $tagId) {
             if (is_int($tagId)) {
                 $tagIds[] = $tagId;
-
-                continue;
-            }
-
-            if (is_string($tagId) && is_numeric($tagId)) {
-                $tagIds[] = (int) $tagId;
             }
         }
 

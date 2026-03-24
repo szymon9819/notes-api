@@ -7,6 +7,7 @@ namespace App\Infrastructure\Http\Requests;
 use App\Domain\Notes\Enums\NoteStatus;
 use App\Domain\Notes\Enums\PublicationReasonType;
 use App\Domain\Notes\ValueObjects\PublicationReason;
+use DateTimeImmutable;
 use Illuminate\Contracts\Validation\Rule as ValidationRuleContract;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -75,24 +76,13 @@ class StoreNoteRequest extends FormRequest
         return NoteStatus::from($this->string('status')->toString());
     }
 
-    public function hasContent(): bool
+    public function content(): ?string
     {
-        return $this->exists('content');
-    }
+        if ($this->input('content') === null) {
+            return null;
+        }
 
-    public function contentIsNull(): bool
-    {
-        return $this->input('content') === null;
-    }
-
-    public function content(): string
-    {
         return $this->string('content')->toString();
-    }
-
-    public function hasPinnedFlag(): bool
-    {
-        return $this->exists('is_pinned');
     }
 
     public function isPinned(): bool
@@ -100,38 +90,30 @@ class StoreNoteRequest extends FormRequest
         return $this->boolean('is_pinned');
     }
 
-    public function hasPublishedAt(): bool
+    public function publishedAt(): ?DateTimeImmutable
     {
-        return $this->exists('published_at');
+        if ($this->input('published_at') === null) {
+            return null;
+        }
+
+        return new DateTimeImmutable($this->string('published_at')->toString());
     }
 
-    public function publishedAtIsNull(): bool
+    public function publicationReasonType(): ?PublicationReasonType
     {
-        return $this->input('published_at') === null;
-    }
+        if ($this->input('publication_reason_type') === null) {
+            return null;
+        }
 
-    public function publishedAt(): string
-    {
-        return $this->string('published_at')->toString();
-    }
-
-    public function hasPublicationReasonType(): bool
-    {
-        return $this->exists('publication_reason_type');
-    }
-
-    public function publicationReasonType(): PublicationReasonType
-    {
         return PublicationReasonType::from($this->string('publication_reason_type')->toString());
     }
 
-    public function hasPublicationReasonMessage(): bool
+    public function publicationReasonMessage(): ?string
     {
-        return $this->exists('publication_reason_message');
-    }
+        if ($this->input('publication_reason_message') === null) {
+            return null;
+        }
 
-    public function publicationReasonMessage(): string
-    {
         return $this->string('publication_reason_message')->toString();
     }
 
@@ -145,12 +127,6 @@ class StoreNoteRequest extends FormRequest
         foreach ($this->array('tag_ids') as $tagId) {
             if (is_int($tagId)) {
                 $tagIds[] = $tagId;
-
-                continue;
-            }
-
-            if (is_string($tagId) && is_numeric($tagId)) {
-                $tagIds[] = (int) $tagId;
             }
         }
 

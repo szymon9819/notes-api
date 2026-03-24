@@ -41,43 +41,39 @@ class ListNotesRequest extends PaginatedRequest
         ] + $this->paginationMessages();
     }
 
-    public function hasSearchTerm(): bool
+    public function searchTerm(): ?string
     {
-        return $this->exists('search');
-    }
+        if (!$this->exists('search')) {
+            return null;
+        }
 
-    public function searchTerm(): string
-    {
         return $this->string('search')->toString();
     }
 
-    public function hasStatusFilter(): bool
+    public function statusFilter(): ?NoteStatus
     {
-        return $this->exists('status');
-    }
+        if (!$this->exists('status')) {
+            return null;
+        }
 
-    public function statusFilter(): NoteStatus
-    {
         return NoteStatus::from($this->string('status')->toString());
     }
 
-    public function hasTagFilter(): bool
+    public function tagFilter(): ?string
     {
-        return $this->exists('tag');
-    }
+        if (!$this->exists('tag')) {
+            return null;
+        }
 
-    public function tagFilter(): string
-    {
         return $this->string('tag')->toString();
     }
 
-    public function hasPinnedFilter(): bool
+    public function pinnedFilter(): ?bool
     {
-        return $this->exists('pinned');
-    }
+        if (!$this->exists('pinned')) {
+            return null;
+        }
 
-    public function pinnedFilter(): bool
-    {
         return $this->boolean('pinned');
     }
 }

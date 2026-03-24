@@ -27,7 +27,6 @@ use App\Infrastructure\Http\Requests\UpdateNoteRequest;
 use App\Infrastructure\Presentation\Api\NoteDataPresenter;
 use App\Persistence\Eloquent\Models\Note;
 use App\Persistence\Eloquent\Models\User;
-use DateTimeImmutable;
 use Dedoc\Scramble\Attributes\Endpoint;
 use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\JsonResponse;
@@ -54,10 +53,10 @@ class NoteController extends Controller
         $result = $this->queryBus->ask(new ListNotesQuery(
             userId: UserId::fromInt($user->id),
             perPage: $listNotesRequest->perPage(),
-            search: $listNotesRequest->hasSearchTerm() ? $listNotesRequest->searchTerm() : null,
-            status: $listNotesRequest->hasStatusFilter() ? $listNotesRequest->statusFilter()->value : null,
-            tag: $listNotesRequest->hasTagFilter() ? $listNotesRequest->tagFilter() : null,
-            pinned: $listNotesRequest->hasPinnedFilter() ? $listNotesRequest->pinnedFilter() : null,
+            search: $listNotesRequest->searchTerm(),
+            status: $listNotesRequest->statusFilter()?->value,
+            tag: $listNotesRequest->tagFilter(),
+            pinned: $listNotesRequest->pinnedFilter(),
         ));
 
         if (!$result instanceof PaginatedData) {
@@ -77,18 +76,12 @@ class NoteController extends Controller
             $note = $this->commandBus->dispatch(new CreateNoteCommand(
                 userId: UserId::fromInt($user->id),
                 title: $storeNoteRequest->title(),
-                content: $storeNoteRequest->hasContent() ? ($storeNoteRequest->contentIsNull() ? null : $storeNoteRequest->content()) : null,
+                content: $storeNoteRequest->content(),
                 status: DomainNoteStatus::from($storeNoteRequest->status()->value),
-                isPinned: $storeNoteRequest->hasPinnedFlag() && $storeNoteRequest->isPinned(),
-                publishedAt: $storeNoteRequest->hasPublishedAt()
-                    ? $this->dateTimeOrNull($storeNoteRequest->publishedAtIsNull() ? null : $storeNoteRequest->publishedAt())
-                    : null,
-                publicationReasonType: $storeNoteRequest->hasPublicationReasonType()
-                    ? $storeNoteRequest->publicationReasonType()
-                    : null,
-                publicationReasonMessage: $storeNoteRequest->hasPublicationReasonMessage()
-                    ? $storeNoteRequest->publicationReasonMessage()
-                    : null,
+                isPinned: $storeNoteRequest->isPinned(),
+                publishedAt: $storeNoteRequest->publishedAt(),
+                publicationReasonType: $storeNoteRequest->publicationReasonType(),
+                publicationReasonMessage: $storeNoteRequest->publicationReasonMessage(),
                 tagIds: $storeNoteRequest->tagIds(),
             ));
         } catch (InvalidPublicationReasonMessage|PublicationReasonCannotMatchTitle|PublicationReasonRequired $exception) {
@@ -142,7 +135,7 @@ class NoteController extends Controller
                 title: $updateNoteRequest->title(),
                 status: DomainNoteStatus::from($updateNoteRequest->status()->value),
                 isPinned: $updateNoteRequest->isPinned(),
-                publishedAt: $this->dateTimeOrNull($updateNoteRequest->publishedAt()),
+                publishedAt: $updateNoteRequest->publishedAt(),
                 publicationReasonType: $updateNoteRequest->publicationReasonType(),
                 publicationReasonMessage: $updateNoteRequest->publicationReasonMessage(),
                 tagIds: $updateNoteRequest->tagIds(),
@@ -178,15 +171,6 @@ class NoteController extends Controller
         }
 
         return response()->noContent();
-    }
-
-    private function dateTimeOrNull(?string $value): ?DateTimeImmutable
-    {
-        if ($value === null) {
-            return null;
-        }
-
-        return new DateTimeImmutable($value);
     }
 
     private function publicationReasonValidationException(
